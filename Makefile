@@ -58,7 +58,7 @@ COMMON_SRC := src/driver.c src/ref_blas.c src/timer.c \
 #
 # Note: Explicit rules are used for each implementation because driver 
 #       parameters may vary (e.g., some require n to be a multiple of MR/NR).
-IMPLS := ijk
+IMPLS := ijk ikj
 
 .PHONY: all run plot clean distclean $(IMPLS)
 
@@ -74,6 +74,15 @@ ijk: $(BIN_DIR)/dgemm_ijk.x | $(DATA_DIR)
 
 $(BIN_DIR)/dgemm_ijk.x: $(COMMON_SRC) src/my_dgemm_ijk.c Makefile | $(BIN_DIR)
 	$(CC) $(CFLAGS) -DIMPL_NAME='"ijk"' $(filter %.c,$^) \
+		$(BLAS_LIB) -o $@ $(LDFLAGS)
+
+ikj: $(BIN_DIR)/dgemm_ikj.x | $(DATA_DIR)
+	$(BIN_DIR)/dgemm_ikj.x $(NREPEATS) $(NFIRST) $(NLAST) $(NINC) \
+		> $(DATA_DIR)/output_ikj.csv
+	@echo "==> $(DATA_DIR)/output_ikj.csv"
+
+$(BIN_DIR)/dgemm_ikj.x: $(COMMON_SRC) src/my_dgemm_ikj.c Makefile | $(BIN_DIR)
+	$(CC) $(CFLAGS) -DIMPL_NAME='"ikj"' $(filter %.c,$^) \
 		$(BLAS_LIB) -o $@ $(LDFLAGS)
 
 # ============================================================================
