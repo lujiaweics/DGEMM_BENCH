@@ -58,7 +58,7 @@ COMMON_SRC := src/driver.c src/ref_blas.c src/timer.c \
 #
 # Note: Explicit rules are used for each implementation because driver 
 #       parameters may vary (e.g., some require n to be a multiple of MR/NR).
-IMPLS := ijk ikj
+IMPLS := ijk ikj micro_kernel
 
 .PHONY: all run plot clean distclean $(IMPLS)
 
@@ -83,6 +83,15 @@ ikj: $(BIN_DIR)/dgemm_ikj.x | $(DATA_DIR)
 
 $(BIN_DIR)/dgemm_ikj.x: $(COMMON_SRC) src/my_dgemm_ikj.c Makefile | $(BIN_DIR)
 	$(CC) $(CFLAGS) -DIMPL_NAME='"ikj"' $(filter %.c,$^) \
+		$(BLAS_LIB) -o $@ $(LDFLAGS)
+
+micro_kernel: $(BIN_DIR)/dgemm_micro_kernel.x | $(DATA_DIR)
+	$(BIN_DIR)/dgemm_micro_kernel.x $(NREPEATS) $(NFIRST) $(NLAST) $(NINC) \
+		> $(DATA_DIR)/output_micro_kernel.csv
+	@echo "==> $(DATA_DIR)/output_micro_kernel.csv"
+
+$(BIN_DIR)/dgemm_micro_kernel.x: $(COMMON_SRC) src/my_dgemm_micro_kernel.c src/micro_kernel.h Makefile | $(BIN_DIR)
+	$(CC) $(CFLAGS) -DIMPL_NAME='"micro_kernel"' $(filter %.c,$^) \
 		$(BLAS_LIB) -o $@ $(LDFLAGS)
 
 # ============================================================================
