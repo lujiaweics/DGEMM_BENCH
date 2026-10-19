@@ -58,7 +58,7 @@ COMMON_SRC := src/driver.c src/ref_blas.c src/timer.c \
 #
 # Note: Explicit rules are used for each implementation because driver 
 #       parameters may vary (e.g., some require n to be a multiple of MR/NR).
-IMPLS := ijk ikj micro_kernel
+IMPLS := ijk ikj micro_kernel five_loops
 
 .PHONY: all run plot clean distclean $(IMPLS)
 
@@ -90,8 +90,17 @@ micro_kernel: $(BIN_DIR)/dgemm_micro_kernel.x | $(DATA_DIR)
 		> $(DATA_DIR)/output_micro_kernel.csv
 	@echo "==> $(DATA_DIR)/output_micro_kernel.csv"
 
-$(BIN_DIR)/dgemm_micro_kernel.x: $(COMMON_SRC) src/my_dgemm_micro_kernel.c src/micro_kernel.h Makefile | $(BIN_DIR)
+$(BIN_DIR)/dgemm_micro_kernel.x: $(COMMON_SRC) src/my_dgemm_micro_kernel.c include/micro_kernel.h include/common.h Makefile | $(BIN_DIR)
 	$(CC) $(CFLAGS) -DIMPL_NAME='"micro_kernel"' $(filter %.c,$^) \
+		$(BLAS_LIB) -o $@ $(LDFLAGS)
+
+five_loops: $(BIN_DIR)/dgemm_five_loops.x | $(DATA_DIR)
+	$(BIN_DIR)/dgemm_five_loops.x $(NREPEATS) $(NFIRST) $(NLAST) $(NINC) \
+		> $(DATA_DIR)/output_five_loops.csv
+	@echo "==> $(DATA_DIR)/output_five_loops.csv"
+
+$(BIN_DIR)/dgemm_five_loops.x: $(COMMON_SRC) src/my_dgemm_five_loops.c include/micro_kernel.h include/common.h Makefile | $(BIN_DIR)
+	$(CC) $(CFLAGS) -DIMPL_NAME='"five_loops"' $(filter %.c,$^) \
 		$(BLAS_LIB) -o $@ $(LDFLAGS)
 
 # ============================================================================
